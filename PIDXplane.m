@@ -2,35 +2,36 @@ clear;
 clc;
 close;
 
-display('Iniciando comunicaÁ„o...');
-sockUDP = udp('127.0.0.1', 
-   'RemotePort', 49000, 'LocalPort', 8888);
+display('Iniciando comunica√ß√£o...');
+sockUDP = udp('127.0.0.1', 'RemotePort', 49000, 'LocalPort', 8888);
 fopen(sockUDP);
-display('ComunicaÁ„o UDP inicializada.');
+display('Comunica√ß√£o UDP inicializada.');
 
-% Vari·veis de controle e armazenamento
+% Vari√°veis de controle e armazenamento
 loops = 1;
 tic;
 t = 0;
 fileID = fopen('pitch_roll_data.txt','w');
 
-% Vari·veis relacionadas ao PID
+% Vari√°veis relacionadas ao PID
 firstLoop = 1;
-ierr = 0;
-err = zeros(1,2);
+ierrp = 0;
+errp = zeros(1,2);
+ierrr = 0;
+errr = zeros(1,2);
 
 while 1
     msgRecv = fread(sockUDP);
     pitch = getData(msgRecv,2);
     roll = getData(msgRecv,3);
         
-    % Dados recebidos s„o armazenados em um arquivo
+    % Dados recebidos s√£o armazenados em um arquivo
     fprintf(fileID,'%f\t',pitch);
     fprintf(fileID,'%f\t',roll);
     fprintf(fileID,'%f\r\n',t);
     
     % Este if garante que a mensagem seja mostrada apenas a cada 5 loops, o
-    % que garante que fique mais f·cil vizualiz·-la.
+    % que garante que fique mais f√°cil vizualiz√°-la.
     dt = toc;
     t = t + dt;
     if rem(loops,5) == 0
@@ -44,50 +45,50 @@ while 1
     end
     tic;
     
-    % A ideia È controlar o Pitch para que o avi„o se estabelize em
-    % cruzeiro, para que futuramente seja possÌvel controlar a altura a
+    % A ideia √© controlar o Pitch para que o avi√£o se estabelize em
+    % cruzeiro, para que futuramente seja poss√≠vel controlar a altura a
     % partir do controle do pitch.
     
-    % CÛdigo que computa o PID para o pitch
+    % C√≥digo que computa o PID para o pitch
     kpp = 0.13; kip = 0.0015; kdp = 0.05;
-    input = pitch;
-    ref = 0;
-    err(1) = ref - input;
-    perr = kpp*err(1);
-    ierr = ierr + (kip*err(1));
-    derr = kdp*(err(1) - err(2));
-    output = perr + ierr + derr;
-    err(2) = err(1);
-    elevatorValue = output;
+    inputp = pitch;
+    refp = 0;
+    errp(1) = refp - inputp;
+    perrp = kpp*errp(1);
+    ierrp = ierrp + (kip*errp(1));
+    derrp = kdp*(errp(1) - errp(2));
+    outputp = perrp + ierrp + derrp;
+    errp(2) = errp(1);
+    elevatorValue = outputp;
     
-    % O valor calculado pelo PID È ent„o enviado ao XPlane
+    % O valor calculado pelo PID √© ent√£o enviado ao XPlane
     setElevator(elevatorValue,sockUDP);
     
-    % CÛdigo que computa o PID para o roll
+    % C√≥digo que computa o PID para o roll
     kpr = 0.2; kir = 0.003; kdr = 0.02;
-    input = roll;
-    ref = 0;
-    err(1) = ref - input;
-    perr = kpr*err(1);
-    ierr = ierr + (kir*err(1));
-    derr = kdr*(err(1) - err(2));
-    output = perr + ierr + derr;
-    err(2) = err(1);
-    aileronValue = output;
+    inputr = roll;
+    refr = 0;
+    errr(1) = refr - inputr;
+    perrr = kpr*errr(1);
+    ierrr = ierrr + (kir*errr(1));
+    derrr = kdr*(errr(1) - errr(2));
+    outputr = perrr + ierrr + derrr;
+    errr(2) = errr(1);
+    aileronValue = outputr;
     
-    % O valor calculado pelo PID È ent„o enviado ao XPlane
+    % O valor calculado pelo PID √© ent√£o enviado ao XPlane
     setAileron(aileronValue,sockUDP);
     
     loops = loops + 1;
 end
-%% Encerramento da comunicaÁ„o UDP
+%% Encerramento da comunica√ß√£o UDP
 clc;
 leaveControl(sockUDP);
-display('Encerrando comunicaÁ„o UDP...');
+display('Encerrando comunica√ß√£o UDP...');
 fclose(sockUDP);
 delete(sockUDP);
 clear sockUDP;
-display('ComunicaÁ„o UDP encerrada.');
+display('Comunica√ß√£o UDP encerrada.');
 
 %% Resultados obtidos
 clc;
@@ -98,7 +99,7 @@ pitch = fileData(:,1);
 roll = fileData(:,2);
 t = fileData(:,3);
 
-% Vari·vel que determina quantos dados da amostra ser„o mostrados.
+% Vari√°vel que determina quantos dados da amostra ser√£o mostrados.
 nData = length(t);
 
 % Plot dos dados.
@@ -151,13 +152,13 @@ fileName = strrep(['images\pitch_roll\(kp ' num2str(kpp) ' ki ' num2str(kip) ' k
 
 %% Testes
 %% Teste msgBuilder
-% Este cÛdigo constroi e envia uma mensagem para o XPlane de duas formas
-% diferentes. Manualmente e por meio da funÁ„o msgBuilder. Este cÛdigo foi
-% desenvolvido para testar a funÁ„o msgBuilder.
+% Este c√≥digo constroi e envia uma mensagem para o XPlane de duas formas
+% diferentes. Manualmente e por meio da fun√ß√£o msgBuilder. Este c√≥digo foi
+% desenvolvido para testar a fun√ß√£o msgBuilder.
 
 clear 
 clc
-display('Iniciando comunicaÁ„o UDP...');
+display('Iniciando comunica√ß√£o UDP...');
 sockUDP = udp('127.0.0.1', 'RemotePort', 49000, 'LocalPort', 1000);
 fopen(sockUDP);
 headerData = [68 65 84 65 0];
@@ -184,21 +185,21 @@ while 1
     pause(1);
 end
 %%
-display('Encerrando comunicaÁ„o UDP...');
+display('Encerrando comunica√ß√£o UDP...');
 fclose(sockUDP);
 delete(sockUDP);
 clear sendUDP;
-display('ComunicaÁ„o UDP encerrada.');
+display('Comunica√ß√£o UDP encerrada.');
 
 %% Teste setElevator e leaveControl
-% Este cÛdigo envia para o XPlane mensagens que alteram a angulaÁ„o dos
-% elevators (profundores) e por fim devolte o controle ao usu·rio. Este 
-% cÛdigo foi desenvolvido para testar as funÁıes setElevator e 
+% Este c√≥digo envia para o XPlane mensagens que alteram a angula√ß√£o dos
+% elevators (profundores) e por fim devolte o controle ao usu√°rio. Este 
+% c√≥digo foi desenvolvido para testar as fun√ß√µes setElevator e 
 % leaveControl
 
 clear 
 clc
-display('Iniciando comunicaÁ„o UDP...');
+display('Iniciando comunica√ß√£o UDP...');
 sockUDP = udp('127.0.0.1', 'RemotePort', 49000, 'LocalPort', 1000);
 fopen(sockUDP);
 
@@ -210,8 +211,8 @@ while 1
 end
 %%
 leaveControl(sockUDP);
-display('Encerrando comunicaÁ„o UDP...');
+display('Encerrando comunica√ß√£o UDP...');
 fclose(sockUDP);
 delete(sockUDP);
 clear sendUDP;
-display('ComunicaÁ„o UDP encerrada.');
+display('Comunica√ß√£o UDP encerrada.');
